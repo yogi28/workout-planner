@@ -42,6 +42,40 @@ export interface Database {
         }
         Relationships: []
       }
+      workout: {
+        Row: {
+          exercises: number[]
+          inserted_at: string
+          name: string
+          updated_at: string
+          user_id: string
+          workout_id: number
+        }
+        Insert: {
+          exercises: number[]
+          inserted_at?: string
+          name: string
+          updated_at?: string
+          user_id: string
+          workout_id?: number
+        }
+        Update: {
+          exercises?: number[]
+          inserted_at?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+          workout_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

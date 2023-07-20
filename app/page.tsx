@@ -4,6 +4,7 @@ import Link from 'next/link'
 import LogoutButton from '../components/LogoutButton'
 import SupabaseLogo from '../components/SupabaseLogo'
 import NextJsLogo from '../components/NextJsLogo'
+import DashboardButton from '@/components/DashboardButton'
 
 const resources = [
   {
@@ -54,6 +55,7 @@ export default async function Index() {
             {user ? (
               <div className="flex items-center gap-4">
                 Hey, {user.email}!
+                <DashboardButton />
                 <LogoutButton />
               </div>
             ) : (

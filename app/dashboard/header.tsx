@@ -1,5 +1,6 @@
 import { User } from '@supabase/supabase-js';
 import React from 'react';
+import LogoutButton from '../../components/LogoutButton'
 
 function Header(props: {user: User}) {
   return (
@@ -30,8 +31,9 @@ function Header(props: {user: User}) {
                   className="w-8 h-8 rounded-full"
                 />
               </div>
-              <div className="ml-2">
-                <p className="text-sm">{props.user.email}</p>
+              <div className="flex items-center gap-2 border-blue-500">
+                    Hey, {props.user.email}!
+                <LogoutButton />
               </div>
           </li>
         </ul>
