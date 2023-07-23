@@ -15,6 +15,7 @@ export default function Login() {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    console.log(`${location.origin}/auth/callback`)
     await supabase.auth.signUp({
       email,
       password,
