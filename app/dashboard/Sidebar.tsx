@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Database } from '../../types/supabase'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { redirect } from 'next/dist/server/api-utils';
+import { Workout } from '@/types/workout';
 
 const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -20,7 +21,7 @@ type ExerciseCard = {
 }
 
 
-export default function SideBar({selectedIds, allExercises, onCreateWorkout}: {selectedIds: number[], allExercises: ExerciseCard[], onCreateWorkout: () => void}) {
+export default function SideBar({selectedIds, allExercises, onCreateWorkout}: {selectedIds: number[], allExercises: ExerciseCard[], onCreateWorkout: (workout: Workout) => void}) {
     const supabase = createClientComponentClient<Database>()
     const currentTimeStamp = ((new Date()).toISOString());
 
@@ -35,15 +36,18 @@ export default function SideBar({selectedIds, allExercises, onCreateWorkout}: {s
         if (!user){
             alert("No User")
         } else {
-            const { error } = await supabase
-                .from('workout')
-                .insert([
-                { user_id: user?.id, inserted_at: currentTimeStamp, updated_at: currentTimeStamp, exercises: selectedIds, name: workoutName },
-                ])
-                console.log(error)
-                if(!error)
-                    onCreateWorkout()
-            }
+          const { data, error } = await supabase.from("workout").insert([{
+            user_id: user?.id,
+            inserted_at: currentTimeStamp,
+            updated_at: currentTimeStamp,
+            exercises: selectedIds,
+            name: workoutName,
+          }]).select();
+          console.log(error);
+          if (!error) { 
+            onCreateWorkout(data[0]);
+          }
+        }
         
     }
 

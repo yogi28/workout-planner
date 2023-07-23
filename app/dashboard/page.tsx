@@ -1,40 +1,17 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js'
-import { Database } from '../../types/supabase'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import SideBar from './Sidebar';
 import CommonButton from '@/components/CommonButton';
-
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-)
-
-type Exercise = Database["public"]["Tables"]["exercises"]["Row"]
-type ExerciseCard = {
-    exercise_id: Exercise['exercise_id']
-    exercise_name: Exercise['exercise_name']
-    difficulty_level: Exercise['difficulty_level']
-    image: Exercise['image']
-    muscle_group: Exercise['muscle_group']
-}
-
-type Workout = Database["public"]["Tables"]["workout"]["Row"]
-// type WorkoutCard = {
-//     workout_id: Workout['workout_id']
-//     exercises: Workout['exercises']
-//     updated_at: Workout['updated_at']
-//     name: Workout['name']
-// }
+import fetchDashboardData from './fetchDashboardData';
+import error from 'next/error';
+import { ExerciseCard } from '@/types/exercises';
+import { Workout } from '@/types/workout';
+import OnboardingModal from './OnboardingModal';
 
 function HomePage() {
-
-  const supabase = createClientComponentClient<Database>()
-
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [searchTermExercise, setSearchTermExercise] = useState('');
   const [searchTermWorkout, setSearchTermWorkout] = useState('');
   const [allExercises, setExercises] = useState<ExerciseCard[]>([]);
@@ -70,41 +47,33 @@ function HomePage() {
     setfilteredWorkouts(filtered);
   };
 
-  const fetchExercises = async () => {
-    setIsLoading(true)
-    let { data: exercises, error } = await supabase
-    .from('exercises')
-    .select('exercise_id, exercise_name, difficulty_level, image, muscle_group')
-
-    if (exercises && exercises.length > 0) {
-        setExercises(exercises)
-        setfilteredExercises(exercises) }
-    else
-        throw error
-    
-    setIsLoading(false)
-  };
-
-  const fetchWorkouts = async () => {
-    setIsLoading(true)
-
-    let { data: workouts, error } = await supabase
-      .from('workout')
-      .select('*')
-
-    console.log(workouts)
-    if (workouts && workouts.length > 0) {
-        setWorkouts(workouts)
-        setfilteredWorkouts(workouts) }
-    else
-        throw error
-    
-    setIsLoading(false)
-  };
-
   useEffect(() => {
-    fetchExercises()
-    fetchWorkouts()
+    const fetchData = async () => {
+      setIsLoading(true)
+      // await Promise.all([fetchExercises(), fetchWorkouts()])
+      const  { data, err } = await fetchDashboardData()
+
+      if (err) alert(err)
+      console.log(data)
+
+      if (data.user_preferences.onboarded === false) {
+        setShowOnboarding(true)
+      }
+      if (data.exercises && data.exercises.length > 0) {
+        setExercises(data.exercises);
+        setfilteredExercises(data.exercises);
+      } else throw error; 
+
+      if (data.workouts ) {
+          setWorkouts(data.workouts)
+          setfilteredWorkouts(data.workouts) }
+      else
+          throw error  
+
+      setIsLoading(false)
+    }
+  
+    fetchData()
   }, []);
 
   const createNewWorkout = () => {
@@ -122,70 +91,84 @@ function HomePage() {
     }
   }
 
-  const fetchMyWorkouts = () => {
-    setShowWorkouts(true)
-  }
-
   return (
+    <>
+    <OnboardingModal isOpen={showOnboarding} closeModal={() => setShowOnboarding(false)}/>
     <div className="px-4 py-8 dark:text-white flex">
-      <div className='w-1/6'></div>
-      <div className='w-4/6'>
-        <div className='flex mb-8'>
+      <div className="w-1/6"></div>
+      <div className="w-4/6">
+        <div className="flex mb-8">
           <h1 className="text-4xl font-bold flex-auto">Workout Planner</h1>
-          <CommonButton _handleClick={fetchMyWorkouts} _text='My Workouts!' />
-          <CommonButton _handleClick={createNewWorkout} _text='New Workout' />
+          <CommonButton
+            _handleClick={() => setShowWorkouts(true)}
+            _text="My Workouts!"
+          />
+          <CommonButton _handleClick={createNewWorkout} _text="New Workout" />
         </div>
         <div className="mb-8">
-          {showWorkouts ? <input
+          {showWorkouts ? (
+            <input
               type="text"
               placeholder="Search workouts"
               className="w-full py-2 px-4 rounded-md border border-gray-300 text-gray-500 dark:border-gray-600 focus:outline-none focus:border-blue-500"
               value={searchTermWorkout}
               onChange={handleSearchChangeWorkouts}
-            /> :
-              <input
-                type="text"
-                placeholder="Search exercises"
-                className="w-full py-2 px-4 rounded-md border border-gray-300 text-gray-500 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                value={searchTermExercise}
-                onChange={handleSearchChangeExercises}
-              />
-          }
+            />
+          ) : (
+            <input
+              type="text"
+              placeholder="Search exercises"
+              className="w-full py-2 px-4 rounded-md border border-gray-300 text-gray-500 dark:border-gray-600 focus:outline-none focus:border-blue-500"
+              value={searchTermExercise}
+              onChange={handleSearchChangeExercises}
+            />
+          )}
         </div>
-          {isLoading && <p> Loading ...</p>}
-          {!isLoading && (showWorkouts ? 
-            (filteredWorkouts.length === 0 ? (
-                  <p className="text-lg">No workouts found.</p>
-              ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredWorkouts.map((wr) => (
-                    <div key={wr.name}>
-                      <WorkoutCardComponent {...wr} />
-                    </div>
-                  ))}
+        {isLoading && <p> Loading ...</p>}
+        {!isLoading &&
+          (showWorkouts ? (
+            filteredWorkouts.length === 0 ? (
+              <p className="text-lg">No workouts found.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredWorkouts.map((wr) => (
+                  <div key={wr.name}>
+                    <WorkoutCardComponent {...wr} />
                   </div>
-              ))
-              :
-              (filteredExercises.length === 0 ? (
-                    <p className="text-lg">No exercises found.</p>
-                ) : (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {filteredExercises.map((ex) => (
-                      <div key={ex.exercise_name} onClick={() => showSidebar && addOrRemove(ex.exercise_id)} className={selectedExercises.includes(ex.exercise_id) ? "ring-2" : ""}>
-                        <ExerciseCardComponent {...ex}
-                          disableClick={showSidebar}
-                        />
-                      </div>
-                    ))}
-                    </div>
-                )))}
+                ))}
+              </div>
+            )
+          ) : filteredExercises.length === 0 ? (
+            <p className="text-lg">No exercises found.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredExercises.map((ex) => (
+                <div
+                  key={ex.exercise_name}
+                  onClick={() => showSidebar && addOrRemove(ex.exercise_id)}
+                  className={
+                    selectedExercises.includes(ex.exercise_id) ? "ring-2" : ""
+                  }
+                >
+                  <ExerciseCardComponent {...ex} disableClick={showSidebar} />
+                </div>
+              ))}
+            </div>
+          ))}
       </div>
-      {showSidebar && 
-        <div className='w-1/6'>
-            <SideBar selectedIds={selectedExercises} allExercises={filteredExercises} onCreateWorkout={() => fetchWorkouts()}/>
+      {showSidebar && (
+        <div className="w-1/6">
+          <SideBar
+            selectedIds={selectedExercises}
+            allExercises={filteredExercises}
+            onCreateWorkout={(workout) =>
+              setWorkouts([workout, ...allWorkouts])
+            }
+          />
         </div>
-      }
+      )}
     </div>
+    </>
   );
 }
 

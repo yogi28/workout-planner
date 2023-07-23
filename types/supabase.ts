@@ -42,6 +42,71 @@ export interface Database {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          instagram_url: string | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id: string
+          instagram_url?: string | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string
+          instagram_url?: string | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_preferences: {
+        Row: {
+          age: number | null
+          data: Json | null
+          id: string
+          location: string | null
+          onboarded: boolean
+        }
+        Insert: {
+          age?: number | null
+          data?: Json | null
+          id: string
+          location?: string | null
+          onboarded?: boolean
+        }
+        Update: {
+          age?: number | null
+          data?: Json | null
+          id?: string
+          location?: string | null
+          onboarded?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_id_fkey"
+            columns: ["id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       workout: {
         Row: {
           exercises: number[]
