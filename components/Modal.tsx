@@ -1,7 +1,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 
-type ModalProps = {action: JSX.Element, title: string, children: React.ReactNode, closeModal: () => void, isOpen: boolean}
+type ModalProps = {action?: JSX.Element, title: string, children: React.ReactNode, closeModal: () => void, isOpen: boolean}
 
 export default function MyModal({title, children, closeModal, isOpen, action}: ModalProps) {
   return (
